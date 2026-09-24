@@ -68,7 +68,7 @@ char ** Percorre_Diretoria(const char *dir,int *count){
         if(strncmp(apanhaconf,".conf",5*sizeof(char))==0){ /*se os ultimos 5 bytes do nome original forem .conf
                                                             então usamos o strdup para criar um ponteiro
                                                             com tamanho igual ao nome e inserimos na nossa lista 
-                                                            no indice do count*/
+                                                            no indice do count,*/
           listanomes[*count]=strdup(data->d_name);
           count++; /*count=ficheiros .conf lidos com sucesso*/
         }
