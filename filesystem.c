@@ -47,30 +47,38 @@ int absolute_path(const char *path, char *buffer, size_t size){
 }
 
 char ** Percorre_Diretoria(const char *dir,int *count){
-  DIR* dirent;
-  char** listanomes=(char**)malloc(sizeof(char*)*10);
-  struct dirent *data;
-  int tamanhomaximo=10;
-  if((dirent=opendir(dir))!=NULL){
-    while ((data=readdir(dirent))!=NULL){
-      if(tamanhomaximo-*count<2){
+  /*passamos endereço do count(vai contar os ficheiros na dir) como parametro
+    pois assim vamos poder,alem de ter a lista de nomes,ter o numero de ficheiros*/
+  DIR* dirent; /*inicializamos o dirent que vai ligar as diversas fases(open,read e close)*/
+  char** listanomes=(char**)malloc(sizeof(char*)*10); /*damos malloc de uma lista de ponteiros(strings)
+                                                        que tem tamanho inicial de 10 strings*/
+  struct dirent *data;   /*com struct *data vamos ter acesso á info proveniente das funções open,read e close*/
+  int tamanhomaximo=10;  /*tamanho inicial da lista*/
+  if((dirent=opendir(dir))!=NULL){ /*garantimos que o open dir corre com sucesso*/
+    while ((data=readdir(dirent))!=NULL){ /*enquanto houver ficheiros,continuamos a correr o read*/
+      if(tamanhomaximo-*count<2){  /*se tivermos a aproximar do limite da lista,realocamos espaço para mais 10 strings*/
         tamanhomaximo+=10*sizeof(char*);
         listanomes=realloc(listanomes,tamanhomaximo);
       }
       int tamanhonome=strlen(data->d_name);
-      char* apanhaconf=data->d_name+tamanhonome*sizeof(char)-5;
-      if (tamanhonome>=5){
-        if(strncmp(apanhaconf,".conf",5*sizeof(char))==0){
+      char* apanhaconf=data->d_name+tamanhonome*sizeof(char)-5; /*vamos avançar o ponteiro do nome
+                                                                  para até ao fim e depois retrocedemos 5 para ficarmos
+                                                                  com os bytes onde é possivel estar o .conf(5 bytes) */
+      if (tamanhonome>=5){ /*se o nome for maior ou igual a 5,então pode ser um .conf pois .conf ocupa 5 bytes*/
+        if(strncmp(apanhaconf,".conf",5*sizeof(char))==0){ /*se os ultimos 5 bytes do nome original forem .conf
+                                                            então usamos o strdup para criar um ponteiro
+                                                            com tamanho igual ao nome e inserimos na nossa lista 
+                                                            no indice do count*/
           listanomes[*count]=strdup(data->d_name);
-          count++;
+          count++; /*count=ficheiros .conf lidos com sucesso*/
         }
     }
 
     }
-    closedir(dirent);
-    return listanomes;
+    closedir(dirent);  /*fechamos o repositorio*/
+    return listanomes; /*retornamos a lista de nomes*/
   }
   else{
-    perror("erro a abrir diretoria");
+    perror("erro a abrir diretoria"); /*caso o opendir falhou,então exibimos mensagem de erro e retornamos NULL*/
     return NULL;  }   
 }
