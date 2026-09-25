@@ -35,5 +35,9 @@ int file_exists(const char *path);
  */
 int absolute_path(const char *path, char *buffer, size_t size);
 
+static int compara(const void* a, const void *b);
+
+char ** Percorre_Diretoria(const char *dir,int *count);
+
 #endif // FILESYSTEM__H
 
