@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <fcntl.h>
 
 #include "parser.h"
 #include "datacenter.h"
@@ -43,7 +44,7 @@ int main(int argc, char **argv){
 		return 1;
 	}
 
-	int count =0;
+	size_t count =0;
 	char **nomes_conf= Percorre_Diretoria(file,&count);
 
 	if (nomes_conf==NULL){			/*Se o opendir falhar*/
@@ -53,16 +54,15 @@ int main(int argc, char **argv){
 
 	char caminho[MAX_PATH_SIZE];
 	
-	for(int i=0; i<count;i++){
+	for(size_t i=0; i<count;i++){
 		snprintf(caminho,sizeof(caminho), "%s/%s",file,nomes_conf[i]);
-		int fd= open(nomes_conf);
+		int fd= open(caminho, O_RDONLY);
+
 		if(fd<0){                /* Se o open falhar*/
 			fprintf(stderr, "Failed to open %s.\n",caminho);
 			continue;
 		}
 		else{
-			
-
 			int end=0;
 			while(end!=1){
 				switch (get_next_command(fd)){
@@ -167,4 +167,10 @@ int main(int argc, char **argv){
 		}
 		close(fd);
 	}
+
+	for(size_t i=0;i<count;i++) free(nomes_conf[i]);
+
+	free(nomes_conf);
+	datacenter_destroy(&dc);
+	return 0;
 }
