@@ -11,6 +11,7 @@
 int main(int argc, char **argv){
 	DataCenter dc;
 	datacenter_init(&dc);
+	
 
 	if (argc != 6) {
     fprintf(stderr, "Usage: %s <servers> <ram> <disk> <cpus> <file>\n", argv[0]);

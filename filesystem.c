@@ -1,4 +1,5 @@
 #define _XOPEN_SOURCE 700
+#define COPY_BUFFER_SIZE 4096
 
 #include "filesystem.h"
 
@@ -98,3 +99,58 @@ char ** Percorre_Diretoria(const char *dir,size_t *count){
 }
 
 
+int copia_ficheiro(const char *inicio,const char *fim){
+  int fd_inicio=open(inicio,O_RDONLY);
+
+  if(fd_inicio<0){
+    perror("open error");
+    return 1;   /*deu erro na abertura*/
+  }
+
+  int fd_fim=open(fim,O_WRONLY|O_CREAT|O_TRUNC,0644);
+  if(fd_fim<0){
+
+    perror("open error");
+    close(fd_inicio);
+    return 1;   /*deu erro na abertura*/
+  }
+
+  char buffer_copia[COPY_BUFFER_SIZE];
+
+  while(1){
+    ssize_t bytes_lidos= read(fd_inicio,buffer_copia,sizeof(buffer_copia));
+
+    if(bytes_lidos<0){
+      perror("Erro na leitura");
+      close(fd_inicio);
+      close(fd_fim);
+      
+      return 1;
+    }
+
+    else if(bytes_lidos==0){
+      break;
+    }
+
+    ssize_t escritos=0;
+    while(escritos<bytes_lidos){
+      ssize_t bytes_escritos=write(fd_fim,buffer_copia + escritos,(size_t)(bytes_lidos - escritos));
+
+      if(bytes_escritos<0){
+        perror("Erro na escrita");
+        close(fd_inicio);
+        close(fd_fim);
+        
+        return 1;
+      }
+
+      escritos+= bytes_escritos;
+
+    }
+  }
+
+  close(fd_inicio);
+  close(fd_fim);
+  return 0;
+
+}

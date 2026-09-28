@@ -39,5 +39,7 @@ int compara(const void* a, const void *b);
 
 char ** Percorre_Diretoria(const char *dir,size_t*count);
 
+int copia_ficheiro(const char *inicio,const char *fim);
+
 #endif // FILESYSTEM__H
 
