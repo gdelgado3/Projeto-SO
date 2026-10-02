@@ -22,14 +22,14 @@ int main(int argc, char **argv){
 	size_t ram;
 	size_t disk;
 	double cpu;
-	char* file; /*inicializamos um  ponteiro para receber o file*/
-	file=argv[5];/*atribuimos o diretorio a file*/
+	char* dir; /*inicializamos um  ponteiro para receber o file*/
+	dir=argv[5];/*atribuimos o diretorio a file*/
 
 	if (parse_size_t_arg(argv[1], &servers) != 0 ||
 			parse_size_t_arg(argv[2], &ram) != 0 ||
 			parse_size_t_arg(argv[3], &disk) != 0 ||
 			parse_double_arg(argv[4], &cpu) != 0 ||
-			path_exists(file)==0)/*vemos se o file existe*/  {
+			path_exists(dir)==0)/*vemos se o file existe*/  {
 		fprintf(stderr, "Invalid command line arguments.\n");
 		return 1;
 	}
@@ -46,7 +46,7 @@ int main(int argc, char **argv){
 	}
 
 	size_t count =0;
-	char **nomes_conf= Percorre_Diretoria(file,&count);
+	char **nomes_conf= Percorre_Diretoria(dir,&count);
 
 	if (nomes_conf==NULL){			/*Se o opendir falhar*/
 		datacenter_destroy(&dc);
@@ -56,7 +56,7 @@ int main(int argc, char **argv){
 	char caminho[MAX_PATH_SIZE];
 	
 	for(size_t i=0; i<count;i++){
-		snprintf(caminho,sizeof(caminho), "%s/%s",file,nomes_conf[i]);
+		snprintf(caminho,sizeof(caminho), "%s/%s",dir,nomes_conf[i]);
 		int fd= open(caminho, O_RDONLY);
 
 		if(fd<0){                /* Se o open falhar*/
