@@ -14,7 +14,7 @@ int main(int argc, char **argv){
 	
 
 	if (argc != 6) {
-    fprintf(stderr, "Usage: %s <servers> <ram> <disk> <cpus> <file>\n", argv[0]);
+    fprintf(stderr, "Usage: %s <servers> <ram> <disk> <cpus> <dir>\n", argv[0]);
     return 1;
   }
 
@@ -22,14 +22,14 @@ int main(int argc, char **argv){
 	size_t ram;
 	size_t disk;
 	double cpu;
-	char* dir; /*inicializamos um  ponteiro para receber o file*/
-	dir=argv[5];/*atribuimos o diretorio a file*/
+	char* dir; /*inicializamos um  ponteiro para receber o dir*/
+	dir=argv[5];/*atribuimos o diretorio a dir*/
 
 	if (parse_size_t_arg(argv[1], &servers) != 0 ||
 			parse_size_t_arg(argv[2], &ram) != 0 ||
 			parse_size_t_arg(argv[3], &disk) != 0 ||
 			parse_double_arg(argv[4], &cpu) != 0 ||
-			path_exists(dir)==0)/*vemos se o file existe*/  {
+			path_exists(dir)==0)/*vemos se o dir existe*/  {
 		fprintf(stderr, "Invalid command line arguments.\n");
 		return 1;
 	}
