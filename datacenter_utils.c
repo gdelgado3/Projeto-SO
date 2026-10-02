@@ -6,6 +6,7 @@
 #include <unistd.h>
 #include <sys/wait.h>
 #include <sys/resource.h>
+#include "filesystem.h"
 
 VMType *VMType_exists(DataCenter *dc, const char* type_id){
 	for(size_t i = 0; i < dc->num_vm_types; i++){
@@ -247,9 +248,24 @@ void spawn_vm_child(VM *vm) {
 }
 
 int spawn_all_vms(Reservation *res) {
+	char bufferdestino[MAX_PATH_SIZE];
+	char pathres[MAX_PATH_SIZE];
+	snprintf(pathres,sizeof(pathres),"/tmp/CloudIST/%s",res->id);
+	int pasta1=criapasta("/tmp/CloudIST/");
+	if(pasta1!=0){
+		return EXIT_FAILURE;
+	}
+	int pasta2=criapasta(pathres);
+	if(pasta2!=0){
+		return EXIT_FAILURE;
+	}
 	for (size_t i = 0; i < res->num_vms; i++) {
 		VM *vm = res->vms[i];
-
+		snprintf(bufferdestino,sizeof(bufferdestino),"/tmp/CloudIST/%s/%s",res->id,vm->id);
+	
+		if(copia_diretoria(vm->type->input_folder,bufferdestino)!=0){
+			return EXIT_FAILURE;
+			}
 		// TODO: Implement fork code. Set VM PID and update VM state to running.
 
 		spawn_vm_child(vm);

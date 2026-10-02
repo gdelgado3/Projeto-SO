@@ -1,6 +1,6 @@
 #define _XOPEN_SOURCE 700
 #define COPY_BUFFER_SIZE 4096
-
+#include "constants.h"
 #include "filesystem.h"
 
 #include <sys/stat.h>
@@ -11,6 +11,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <dirent.h>
+#include <errno.h>
 
 int path_exists(const char *path){
   struct stat st;
@@ -152,5 +153,70 @@ int copia_ficheiro(const char *inicio,const char *fim){
   close(fd_inicio);
   close(fd_fim);
   return 0;
+
+}
+
+int copia_diretoria(const char *origem,const char *destino){
+  DIR *dirent;
+  int falhascopia=0;
+  char bufferorigem[MAX_PATH_SIZE];
+  char bufferdestino[MAX_PATH_SIZE];
+  struct  dirent *data;
+  dirent=opendir(origem);
+  if(dirent==NULL){
+    perror("Erro na abertura");
+    return EXIT_FAILURE;
+  }
+  int pastadestino=criapasta(destino);
+  if (pastadestino!=0){
+    closedir(dirent);
+    return EXIT_FAILURE;
+  }
+    while ((data=readdir(dirent))!=NULL){
+      if (strcmp(data->d_name,".")==0||strcmp(data->d_name,"..")==0){
+        continue;
+      }
+      int criaorigem=snprintf(bufferorigem,sizeof(bufferorigem),"%s/%s",origem,data->d_name);
+      if(criaorigem>=MAX_PATH_SIZE){
+        falhascopia+=1;
+        continue;
+      }
+      int criadestino=snprintf(bufferdestino,sizeof(bufferdestino),"%s/%s",destino,data->d_name);
+      if(criadestino>=MAX_PATH_SIZE){
+        falhascopia+=1;
+        continue;
+      }
+      if (file_exists(bufferorigem)){
+        if(copia_ficheiro(bufferorigem,bufferdestino)!=0){
+          falhascopia+=1;
+        }
+
+      }
+      else if(path_exists(bufferorigem)){
+        if(copia_diretoria(bufferorigem,bufferdestino)!=0){
+          falhascopia+=1;
+        }
+      }
+
+
+    }
+    closedir(dirent);
+    if (falhascopia>0){
+    return EXIT_FAILURE;
+    }
+    else{
+      return EXIT_SUCCESS;
+    }
+}
+
+int criapasta(const char*nome){
+  int criacao=mkdir(nome,S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH);
+  if (criacao==-1){
+    if (errno!=EEXIST){
+      perror("erro criar pasta");
+      return EXIT_FAILURE;
+    }
+  }
+  return EXIT_SUCCESS;
 
 }

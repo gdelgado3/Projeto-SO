@@ -41,5 +41,8 @@ char ** Percorre_Diretoria(const char *dir,size_t*count);
 
 int copia_ficheiro(const char *inicio,const char *fim);
 
+int copia_diretoria(const char *origem,const char *destino);
+
+int criapasta(const char*nome);
 #endif // FILESYSTEM__H
 
