@@ -7,6 +7,7 @@
 #include <sys/wait.h>
 #include <sys/resource.h>
 #include "filesystem.h"
+#include <math.h>
 
 VMType *VMType_exists(DataCenter *dc, const char* type_id){
 	for(size_t i = 0; i < dc->num_vm_types; i++){
@@ -239,15 +240,29 @@ void reservation_destroy(DataCenter *dc, Reservation *reservation) {
 	dc->num_reservations--;
 }
 
-void spawn_vm_child(VM *vm) {
-	(void)vm; // To avoid warning.
+void spawn_vm_child(VM *vm,int tempoCPU) {
+	struct rlimit lim;
+	char buffer[MAX_STRING_SIZE];
+	snprintf(buffer,sizeof(buffer),"%d",tempoCPU);
+	size_t rammax=vm->type->required.ram;
+	lim.rlim_cur=rammax<<30;
+	lim.rlim_max=rammax<<30;
+	setrlimit(RLIMIT_AS,&lim);
 
+	size_t maxdisk=vm->type->required.disk;
+	lim.rlim_cur=maxdisk <<30;
+	lim.rlim_max=maxdisk<<30;
+	setrlimit(RLIMIT_FSIZE,&lim);
+
+	char* args[]={"cpulimit","-q","-f","-l",buffer,"--",vm->type->exec_path,NULL};
+	execvp("cpulimit",args);
 	// TODO: Limit RAM, DISK and use exec with cpulimit.
 
 	fprintf(stderr, "VM execution not implemented in base version.\n");
 }
 
-int spawn_all_vms(Reservation *res) {
+int spawn_all_vms(Reservation *res,DataCenter *dc) {
+	
 	char bufferdestino[MAX_PATH_SIZE];
 	char pathres[MAX_PATH_SIZE];
 	snprintf(pathres,sizeof(pathres),"/tmp/CloudIST/%s",res->id);
@@ -267,8 +282,8 @@ int spawn_all_vms(Reservation *res) {
 			return EXIT_FAILURE;
 			}
 		// TODO: Implement fork code. Set VM PID and update VM state to running.
-
-		spawn_vm_child(vm);
+		int tempocpu=(int)ceil(vm->type->required.cpu/(dc->servers->total.cpu*(double)dc->num_servers)*100);
+		spawn_vm_child(vm,tempocpu);
 
 	}
 
