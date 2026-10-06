@@ -256,9 +256,8 @@ void spawn_vm_child(VM *vm,int tempoCPU) {
 
 	char* args[]={"cpulimit","-q","-f","-l",buffer,"--",vm->type->exec_path,NULL};
 	execvp("cpulimit",args);
-	// TODO: Limit RAM, DISK and use exec with cpulimit.
-
-	fprintf(stderr, "VM execution not implemented in base version.\n");
+	perror("Erro no exec");
+	_exit(EXIT_FAILURE);
 }
 
 int spawn_all_vms(Reservation *res,DataCenter *dc) {
