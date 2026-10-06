@@ -276,14 +276,26 @@ int spawn_all_vms(Reservation *res,DataCenter *dc) {
 	}
 	for (size_t i = 0; i < res->num_vms; i++) {
 		VM *vm = res->vms[i];
+		int tempocpu=(int)ceil(vm->type->required.cpu/(dc->servers->total.cpu*(double)dc->num_servers)*100);
+
 		snprintf(bufferdestino,sizeof(bufferdestino),"/tmp/CloudIST/%s/%s",res->id,vm->id);
 	
 		if(copia_diretoria(vm->type->input_folder,bufferdestino)!=0){
 			return EXIT_FAILURE;
 			}
 		// TODO: Implement fork code. Set VM PID and update VM state to running.
-		int tempocpu=(int)ceil(vm->type->required.cpu/(dc->servers->total.cpu*(double)dc->num_servers)*100);
-		spawn_vm_child(vm,tempocpu);
+		int PID=fork();
+		if(PID==-1){
+			perror("Erro no fork");
+			return EXIT_FAILURE;
+		}
+		else if (PID==0){
+			spawn_vm_child(vm,tempocpu);
+		}
+		else{
+		vm->pid=PID;
+		vm->state=1;
+		}
 
 	}
 
