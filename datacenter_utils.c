@@ -301,19 +301,23 @@ int spawn_all_vms(Reservation *res,DataCenter *dc) {
 	return 0;
 }
 
+void wait_for_vm(Reservation *res)
+
+
 void wait_for_all_vms(Reservation *res) {
 	for (size_t i = 0; i < res->num_vms; i++) {
-		// TODO: IMPLEMENT WAITING FOR VM
 		VM *vm= res->vms[i];
 		int status;
 		pid_t pid_espera;
-		pid_espera =waitpid(vm->pid,&status,0);
 
-		if(pid_espera==-1){
+		if(vm->state==VM_STATE_RUNNING){
+			pid_espera =waitpid(vm->pid,&status,0);
+
+			if(pid_espera==-1){
 			perror("Erro no waitpid");
-		}
-
-
+			}
+		}	
+	
 		res->vms[i]->state = VM_STATE_TERMINATED;
 	}
 }
