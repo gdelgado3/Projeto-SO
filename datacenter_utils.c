@@ -194,30 +194,6 @@ Reservation *find_pending_reservation(DataCenter *dc, const char *reservation_id
 }
 
 void reservation_destroy(DataCenter *dc, Reservation *reservation) {
-	// Free every VM belonging to the reservation.
-	for (size_t i = 0; i < reservation->num_vms; i++) {
-		VM *vm = reservation->vms[i];
-		Server *server = vm->server;
-
-		// Return the VM resources back to the hosting server.
-		resources_add(&server->available, vm->type->required);
-
-		// Remove the VM from the server's hosted VM list.
-		for (size_t j = 0; j < server->num_hosted_vms; j++) {
-			if (server->hosted_vms[j] == vm) {
-				// Shift the remaining VMs one position to the left.
-				memmove(&server->hosted_vms[j],
-								&server->hosted_vms[j + 1],
-								(server->num_hosted_vms - j - 1) * sizeof(VM *));
-
-				server->num_hosted_vms--;
-				break;
-			}
-		}
-
-		free(vm);
-		reservation->vms[i] = NULL;
-	}
 
 	reservation->num_vms = 0;
 
@@ -239,6 +215,43 @@ void reservation_destroy(DataCenter *dc, Reservation *reservation) {
 
 	dc->num_reservations--;
 }
+
+void VM_Destroy(DataCenter *dc,Reservation *reservation,VM *vm){
+	/*Função que recebe a vm e destroi a vm da reserva e do server,sendo responsavel pela destrução da vm e pela
+	destrução da reserva caso a reserva não tenha vms ativas*/
+		Server *server = vm->server;
+
+		// Return the VM resources back to the hosting server.
+		resources_add(&server->available, vm->type->required);
+
+		// Remove the VM from the server's hosted VM list.
+		for (size_t j = 0; j < server->num_hosted_vms; j++) {
+			if (server->hosted_vms[j] == vm) {
+				// Shift the remaining VMs one position to the left.
+				memmove(&server->hosted_vms[j],
+								&server->hosted_vms[j + 1],
+								(server->num_hosted_vms - j - 1) * sizeof(VM *));
+
+				server->num_hosted_vms--;
+				break;
+			}
+		}
+		for (size_t i=0;i<reservation->num_vms;i++){
+			if(reservation->vms[i]==vm){
+				memmove(&reservation->vms[i],
+								&reservation->vms[i + 1],
+								(reservation->num_vms - i - 1) * sizeof(VM *));
+				reservation->num_vms--;
+				break;
+
+			}
+		}
+		if(reservation->num_vms==0){
+			reservation_destroy(dc,reservation);
+		}
+		free(vm);
+	}
+
 
 void spawn_vm_child(VM *vm,int tempoCPU) {
 	struct rlimit lim;

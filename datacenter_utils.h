@@ -118,4 +118,5 @@ const char *vm_state_to_string(VMState state);
  */
 const char *res_state_to_string(ReservationState state);
 
+void VM_Destroy(DataCenter *dc,Reservation *res,VM*vm);
 #endif // DATACENTER_UTILS__H
