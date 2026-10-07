@@ -247,12 +247,18 @@ void spawn_vm_child(VM *vm,int tempoCPU) {
 	size_t rammax=vm->type->required.ram;
 	lim.rlim_cur=rammax<<30;
 	lim.rlim_max=rammax<<30;
-	setrlimit(RLIMIT_AS,&lim);
+	if(setrlimit(RLIMIT_AS,&lim)==-1){
+		perror("Erro no setrlimit ram");
+		_exit(EXIT_FAILURE);
+	}
 
 	size_t maxdisk=vm->type->required.disk;
 	lim.rlim_cur=maxdisk <<30;
 	lim.rlim_max=maxdisk<<30;
-	setrlimit(RLIMIT_FSIZE,&lim);
+	if(setrlimit(RLIMIT_FSIZE,&lim)==-1){
+		perror("erro nosetrlimit disk");
+		_exit(EXIT_FAILURE);
+	}
 
 	char* args[]={"cpulimit","-q","-f","-l",buffer,"--",vm->type->exec_path,NULL};
 	execvp("cpulimit",args);
