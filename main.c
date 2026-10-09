@@ -5,6 +5,7 @@
 
 #include "parser.h"
 #include "datacenter.h"
+#include "datacenter_utils.h"
 #include "constants.h"
 #include "filesystem.h"
 
@@ -66,6 +67,7 @@ int main(int argc, char **argv){
 		else{
 			int end=0;
 			while(end!=1){
+				wait_for_vm(&dc);
 				switch (get_next_command(fd)){
 					case CMD_DEFINE: {
 						VMType vmtype;
@@ -118,7 +120,7 @@ int main(int argc, char **argv){
 							continue;
 						}
 
-						printf("Finished reservation execution!\n");
+						printf("Reservation começou!\n");
 
 						break;
 
@@ -163,10 +165,15 @@ int main(int argc, char **argv){
 
 					case EOC:
 						end=1;
-				}
 			}
 		}
 		close(fd);
+	}
+}
+
+	while(dc.num_reservations>0){
+		wait_for_all_vms(dc.reservations);
+		reservation_destroy(&dc,&dc.reservations[0]);
 	}
 
 	for(size_t i=0;i<count;i++) free(nomes_conf[i]);

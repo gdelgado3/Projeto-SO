@@ -91,6 +91,8 @@ void spawn_vm_child(VM *vm,int tempoCPU);
  */
 int spawn_all_vms(Reservation *res,DataCenter *dc);
 
+void wait_for_vm(DataCenter *dc);
+
 /**
  * Blocks until every VM's process has exited, updating each VM's state
  * to VM_STATE_TERMINATED as its pid is reaped.
