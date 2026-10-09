@@ -14,14 +14,15 @@ int main(int argc, char **argv){
 	datacenter_init(&dc);
 	
 
-	if (argc != 6) {
-    fprintf(stderr, "Usage: %s <servers> <ram> <disk> <cpus> <dir>\n", argv[0]);
+	if (argc != 7) {
+    fprintf(stderr, "Usage: %s <servers> <ram> <disk> <cpus> <dir> <threads>\n", argv[0]);
     return 1;
   }
 
 	size_t servers;
 	size_t ram;
 	size_t disk;
+	size_t maxthreads;
 	double cpu;
 	char* dir; /*inicializamos um  ponteiro para receber o dir*/
 	dir=argv[5];/*atribuimos o diretorio a dir*/
@@ -30,7 +31,7 @@ int main(int argc, char **argv){
 			parse_size_t_arg(argv[2], &ram) != 0 ||
 			parse_size_t_arg(argv[3], &disk) != 0 ||
 			parse_double_arg(argv[4], &cpu) != 0 ||
-			path_exists(dir)==0)/*vemos se o dir existe*/  {
+			path_exists(dir)==0||parse_size_t_arg(argv[6],&maxthreads)!=0 || maxthreads<=0)/*vemos se o dir existe e se o numero de max threads é maior que 0*/  {
 		fprintf(stderr, "Invalid command line arguments.\n");
 		return 1;
 	}
