@@ -6,6 +6,7 @@
 
 #include "parser.h"
 #include "datacenter.h"
+#include "datacenter_utils.h"
 #include "constants.h"
 #include "filesystem.h"
 
@@ -17,25 +18,8 @@ typedef struct{
 		char** nomesconf;
 		char*dir;
 	}args_threads;
-void*thread_fn(void* args){
-	args_threads *arg=(args_threads*)args;
-	char caminho [MAX_PATH_SIZE];
-	size_t i=0;
-	while(i<arg->numficheiros){
-	pthread_mutex_lock(&arg->trinco);
-	i=arg->contador;
-	arg->contador++;
-	pthread_mutex_unlock(&arg->trinco);
-	if(i>=arg->numficheiros){
-		break;
-	}
-	snprintf(caminho,sizeof(caminho),"%s/%s",arg->dir,arg->nomesconf[i]);
-	processa_conf(arg->dc,caminho);
-	}
-	return NULL;
 
-}
-void*processa_conf(DataCenter* dc,const char*caminho){
+void processa_conf(DataCenter* dc,const char*caminho){
 	int fd= open(caminho, O_RDONLY);
 
 	if(fd<0){                /* Se o open falhar*/
@@ -45,6 +29,7 @@ void*processa_conf(DataCenter* dc,const char*caminho){
 	else{
 		int end=0;
 		while(end!=1){
+			wait_for_vm(dc);
 			switch (get_next_command(fd)){
 				case CMD_DEFINE: {
 					VMType vmtype;
@@ -54,7 +39,7 @@ void*processa_conf(DataCenter* dc,const char*caminho){
 						continue;
 					}
 
-					if(datacenter_define_VM(&dc, &vmtype) != 0){
+					if(datacenter_define_VM(dc, &vmtype) != 0){
 						fprintf(stderr, "Failed to define VM.\n");
 						continue;
 					}
@@ -74,7 +59,7 @@ void*processa_conf(DataCenter* dc,const char*caminho){
 						continue;
 					}
 
-					if (datacenter_reserve(&dc, &reservation) != 0) {
+					if (datacenter_reserve(dc, &reservation) != 0) {
 						fprintf(stderr, "Failed to reserve VMs.\n");
 						continue;
 					}
@@ -92,7 +77,7 @@ void*processa_conf(DataCenter* dc,const char*caminho){
 						continue;
 					}
 
-					if (datacenter_execute(&dc, id) != 0) {
+					if (datacenter_execute(dc, id) != 0) {
 						fprintf(stderr, "Failed to execute reservation.\n");
 						continue;
 					}
@@ -102,7 +87,7 @@ void*processa_conf(DataCenter* dc,const char*caminho){
 						break;
 
 				case CMD_LIST:
-					if (datacenter_list(&dc) != 0) {
+					if (datacenter_list(dc) != 0) {
 						fprintf(stderr, "Failed to list VMs.\n");
 						continue;
 					}
@@ -147,6 +132,25 @@ void*processa_conf(DataCenter* dc,const char*caminho){
 		}
 		close(fd);
 	}
+
+	void*thread_fn(void* args){
+	args_threads *arg=(args_threads*)args;
+	char caminho [MAX_PATH_SIZE];
+	size_t i=0;
+	while(i<arg->numficheiros){
+	pthread_mutex_lock(&arg->trinco);
+	i=arg->contador;
+	arg->contador++;
+	pthread_mutex_unlock(&arg->trinco);
+	if(i>=arg->numficheiros){
+		break;
+	}
+	snprintf(caminho,sizeof(caminho),"%s/%s",arg->dir,arg->nomesconf[i]);
+	processa_conf(arg->dc,caminho);
+	}
+	return NULL;
+
+}
 
 int main(int argc, char **argv){
 	DataCenter dc;
@@ -198,13 +202,22 @@ int main(int argc, char **argv){
 		datacenter_destroy(&dc);
 		return 1;
 	}
+
 	for (size_t i=0;i<maxthreads;i++){
 		/*fazer a func que faz todo o funcionamento da thread*/
 		pthread_create(&tid[i],NULL,thread_fn,(void*)&thread_arg);
+
 	}
 
+
+	
+
 	for (size_t i=0;i<maxthreads;i++){
-		pthread_join(&tid[i],NULL);
+		pthread_join(tid[i],NULL);
+	}
+	while(dc.num_reservations>0){
+		wait_for_all_vms(dc.reservations);
+		reservation_destroy(&dc,&dc.reservations[0]);
 	}
 	for(size_t i=0;i<count;i++) free(nomes_conf[i]);
 

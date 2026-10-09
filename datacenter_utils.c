@@ -302,6 +302,7 @@ int spawn_all_vms(Reservation *res,DataCenter *dc) {
 			return EXIT_FAILURE;
 			}
 		// TODO: Implement fork code. Set VM PID and update VM state to running.
+		fflush(stdout);
 		pid_t PID=fork();
 		if(PID==-1){
 			perror("Erro no fork");
@@ -320,7 +321,30 @@ int spawn_all_vms(Reservation *res,DataCenter *dc) {
 	return 0;
 }
 
-void wait_for_vm(Reservation *res)
+void wait_for_vm(DataCenter *dc){
+	int status;
+	pid_t pid_vm;
+	while(1){
+		pid_vm = waitpid(-1,&status,WNOHANG);
+		if(pid_vm<=0) break;
+		int encontrada=0;
+
+		for(size_t i=0; i<dc->num_reservations;i++){
+			Reservation *reserva= &dc->reservations[i];
+			for(size_t j=0; j<reserva->num_vms;j++){
+				VM *vm=reserva->vms[j];
+				if(pid_vm== vm->pid){
+					encontrada=1;
+					VM_Destroy(dc,reserva,vm);
+					break;
+
+				}
+			}
+			if(encontrada==1) break;
+		}	
+	}
+
+}
 
 
 void wait_for_all_vms(Reservation *res) {
