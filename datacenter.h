@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 #include <sys/types.h>
+#include <pthread.h>
 
 #include "resources.h"
 #include "constants.h"
@@ -67,7 +68,8 @@ typedef struct Reservation {
 
 typedef struct DataCenter {
 	Server *servers;			     // List of Servers.
-	size_t num_servers;              // Number of Servers.
+	size_t num_servers;             //Number of Servers
+    pthread_mutex_t trincodc;            
 
 	VMType vm_types[MAX_VM_TYPES];
     size_t num_vm_types;

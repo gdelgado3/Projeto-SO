@@ -5,6 +5,8 @@
 #include <time.h>
 #include <stdlib.h>
 #include <string.h>
+#include <pthread.h>
+
 
 void datacenter_init(DataCenter *dc) {
   dc->servers = NULL;
@@ -15,9 +17,12 @@ void datacenter_init(DataCenter *dc) {
   dc->num_reservations = 0;
 
   dc->configured = 0;
+
+  pthread_mutex_init(&dc->trincodc,NULL);
 }
 
 void datacenter_destroy(DataCenter *dc) {
+  pthread_mutex_destroy(&dc->trincodc);
   for (size_t i = 0; i < dc->num_servers; i++) {
     for(size_t j = 0; j < dc->servers[i].num_hosted_vms; j++){
       free(dc->servers[i].hosted_vms[j]);

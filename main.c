@@ -21,37 +21,39 @@ typedef struct{
 
 void processa_conf(DataCenter* dc,const char*caminho){
 	int fd= open(caminho, O_RDONLY);
-
 	if(fd<0){                /* Se o open falhar*/
 		fprintf(stderr, "Failed to open %s.\n",caminho);
-		_exit(EXIT_FAILURE);
+		return; /*cada thread se falhar a abrir o seu ficheiro volta para abrir outro ficheiro*/
 	}
 	else{
 		int end=0;
 		while(end!=1){
+			pthread_mutex_lock(&dc->trincodc);
 			wait_for_vm(dc);
+			pthread_mutex_unlock(&dc->trincodc);
 			switch (get_next_command(fd)){
 				case CMD_DEFINE: {
 					VMType vmtype;
-
 					if (parse_define(fd, &vmtype) != 0) {
 						fprintf(stderr, "Invalid define command. See H (help) for usage.\n");
 						continue;
 					}
 
+					pthread_mutex_lock(&dc->trincodc);
 					if(datacenter_define_VM(dc, &vmtype) != 0){
 						fprintf(stderr, "Failed to define VM.\n");
+						pthread_mutex_unlock(&dc->trincodc);
 						continue;
 					}
 
 					printf("VM successfully defined!\n");
+					pthread_mutex_unlock(&dc->trincodc);
 
 					break;
 				}
 
 				case CMD_RESERVE: {
 					Reservation reservation = {0};
-
 					size_t num_items = parse_reserve(fd, &reservation, MAX_RESERVATIONS_ITEMS);
 
 					if (num_items == 0) {
@@ -59,38 +61,45 @@ void processa_conf(DataCenter* dc,const char*caminho){
 						continue;
 					}
 
+					pthread_mutex_lock(&dc->trincodc);
 					if (datacenter_reserve(dc, &reservation) != 0) {
 						fprintf(stderr, "Failed to reserve VMs.\n");
+						pthread_mutex_unlock(&dc->trincodc);
 						continue;
 					}
 
 					printf("Reservation made successfully!\n");
+					pthread_mutex_unlock(&dc->trincodc);
 
 					break;
 				}
 
 				case CMD_EXECUTE:
 					char id[MAX_STRING_SIZE];
-
 					if(parse_execute(fd, id) != 0){
 						fprintf(stderr, "Invalid execute command. See H (help) for usage.\n");
 						continue;
 					}
-
+					pthread_mutex_lock(&dc->trincodc);
 					if (datacenter_execute(dc, id) != 0) {
 						fprintf(stderr, "Failed to execute reservation.\n");
+						pthread_mutex_unlock(&dc->trincodc);
 						continue;
 					}
 
 					printf("Finished reservation execution!\n");
-
+					pthread_mutex_unlock(&dc->trincodc);
 						break;
 
 				case CMD_LIST:
+					pthread_mutex_lock(&dc->trincodc);
+
 					if (datacenter_list(dc) != 0) {
 						fprintf(stderr, "Failed to list VMs.\n");
+						pthread_mutex_unlock(&dc->trincodc);
 						continue;
 					}
+					pthread_mutex_unlock(&dc->trincodc);
 
 					break;
 
