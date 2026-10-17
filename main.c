@@ -3,6 +3,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <pthread.h>
+#include <string.h>
 
 #include "parser.h"
 #include "datacenter.h"
@@ -87,7 +88,7 @@ void processa_conf(DataCenter* dc,const char*caminho){
 						continue;
 					}
 
-					printf("Finished reservation execution!\n");
+					printf("Reservation começou!\n");
 					pthread_mutex_unlock(&dc->trincodc);
 						break;
 
@@ -212,18 +213,25 @@ int main(int argc, char **argv){
 		return 1;
 	}
 
+	size_t criadas=0;
 	for (size_t i=0;i<maxthreads;i++){
-		/*fazer a func que faz todo o funcionamento da thread*/
-		pthread_create(&tid[i],NULL,thread_fn,(void*)&thread_arg);
+		int valorthr = pthread_create(&tid[i],NULL,thread_fn,(void*)&thread_arg);
+		if(valorthr!=0){ 
+			fprintf(stderr, "Erro ao criar a thread: %s\n" , strerror(valorthr));
+			break;
+		}
+		else criadas++;	
+
 
 	}
 
 
 	
 
-	for (size_t i=0;i<maxthreads;i++){
+	for (size_t i=0;i<criadas;i++){
 		pthread_join(tid[i],NULL);
 	}
+	pthread_mutex_destroy(&thread_arg.trinco);
 	while(dc.num_reservations>0){
 		wait_for_all_vms(dc.reservations);
 		reservation_destroy(&dc,&dc.reservations[0]);

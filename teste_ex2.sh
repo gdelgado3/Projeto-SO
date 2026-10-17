@@ -17,7 +17,7 @@ printf 'R R2 V2 1 2\nA R2\nL\n' > testes_ex2/b.conf
 printf 'R R3 V1 1 2\nL\n' > testes_ex2/c.conf
 
 # --- correr ---
-make && time ./cloudIST 2 16 500 8 testes_ex2 2
+make && time ./cloudIST 2 16 500 8 testes_ex2 1
 
 # --- verificações ---
 echo; echo "== Zombies (deve estar vazio) =="
